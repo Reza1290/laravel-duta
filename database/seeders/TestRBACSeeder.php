@@ -38,9 +38,24 @@ class TestRBACSeeder extends Seeder
         $roleMarketing = Role::create(['cKode' => 'RL002', 'cName' => 'Marketing']);
         $roleFinance = Role::create(['cKode' => 'RL003', 'cName' => 'Finance']);
 
-        $userDirektur = User::create(['cKode' => 'US001', 'cName' => 'Direktur']);
-        $userWinda = User::create(['cKode' => 'US002', 'cName' => 'Winda']);
-        $userSerly = User::create(['cKode' => 'US003', 'cName' => 'Serly']);
+        $userDirektur = User::create([
+            'cKode' => 'US001',
+            'cName' => 'Budi Santoso',
+            'username' => 'budi.direktur',
+            'password' => 'rahasia123' 
+        ]);
+        $userWinda = User::create([
+            'cKode' => 'US002',
+            'cName' => 'Winda Lestari',
+            'username' => 'winda.finance',
+            'password' => 'rahasia123'
+        ]);
+        $userSerly = User::create([
+            'cKode' => 'US003',
+            'cName' => 'Serly Marlina',
+            'username' => 'serly.marketing',
+            'password' => 'rahasia123'
+        ]);
 
         $marketingPermissions = Permission::whereIn('menu_id', [$menuSales->id, $menuPurchasing->id])
             ->whereIn('cName', ['view', 'create', 'edit'])

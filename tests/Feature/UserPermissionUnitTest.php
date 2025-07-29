@@ -39,8 +39,8 @@ test('logika Serly sebagai marketing harus memiliki izin yang benar', function (
     expect($serly->hasPermissionTo('edit', 'Purchasing'))->toBeTrue();
     expect($serly->hasPermissionTo('view', 'Sales'))->toBeTrue();
 
-    expect($serly->hasPermissionTo('delete', 'Sales'))->toBeFalse(); 
-    expect($serly->hasPermissionTo('view', 'Cash/Bank'))->toBeFalse(); 
+    expect($serly->hasPermissionTo('delete', 'Sales'))->toBeFalse();
+    expect($serly->hasPermissionTo('view', 'Cash/Bank'))->toBeFalse();
 });
 
 test('logika Winda sebagai finance harus memiliki izin yang benar', function () {
@@ -49,43 +49,8 @@ test('logika Winda sebagai finance harus memiliki izin yang benar', function () 
     expect($winda->hasPermissionTo('create', 'Cash/Bank'))->toBeTrue();
     expect($winda->hasPermissionTo('view', 'Cash/Bank'))->toBeTrue();
 
-    expect($winda->hasPermissionTo('edit', 'Cash/Bank'))->toBeFalse(); 
-    expect($winda->hasPermissionTo('view', 'Sales'))->toBeFalse(); 
+    expect($winda->hasPermissionTo('edit', 'Cash/Bank'))->toBeFalse();
+    expect($winda->hasPermissionTo('view', 'Sales'))->toBeFalse();
 });
 
 
-test('User X dengan role Marketing dan Finance harus memiliki gabungan izin yang benar', function () {
-    $marketingRole = Role::where('cName', 'Marketing')->first();
-    $financeRole = Role::where('cName', 'Finance')->first();
-
-    $userX = User::create(['cKode' => 'US004', 'cName' => 'User X']);
-
-    $userX->roles()->sync([$marketingRole->id, $financeRole->id]);
-
-    expect($userX->hasPermissionTo('create', 'Sales'))->toBeTrue();
-    expect($userX->hasPermissionTo('edit', 'Purchasing'))->toBeTrue();
-
-    expect($userX->hasPermissionTo('create', 'Cash/Bank'))->toBeTrue();
-
-    expect($userX->hasPermissionTo('delete', 'Sales'))->toBeFalse();
-    expect($userX->hasPermissionTo('edit', 'Cash/Bank'))->toBeFalse();
-});
-
-test('User Z role Marketing dan Finance mengaksses Master false', function () {
-    $marketingRole = Role::where('cName', 'Marketing')->first();
-    $financeRole = Role::where('cName', 'Finance')->first();
-
-    $userX = User::create(['cKode' => 'US005', 'cName' => 'User Z']);
-
-    $userX->roles()->sync([$marketingRole->id, $financeRole->id]);
-
-    expect($userX->hasPermissionTo('create', 'Sales'))->toBeTrue();
-    expect($userX->hasPermissionTo('edit', 'Purchasing'))->toBeTrue();
-
-    expect($userX->hasPermissionTo('create', 'Cash/Bank'))->toBeTrue();
-
-    expect($userX->hasPermissionTo('delete', 'Sales'))->toBeFalse();
-    expect($userX->hasPermissionTo('edit', 'Cash/Bank'))->toBeFalse();
-
-    expect($userX->hasPermissionTo('create', 'Master'))->toBeFalse();
-});

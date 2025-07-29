@@ -3,39 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
-class UserController extends Controller
+class UserController extends PermissionedController
 {
+    protected string $resourceName = 'master';
+
     public function index()
     {
-        return User::with('roles')->get();
+        $users = User::with('roles')->latest()->paginate(10);
+        return view('users.index', compact('users'));
     }
 
-    public function store(Request $request)
+    public function edit(User $user)
     {
-        $validated = $request->validate([
-            'cKode' => 'required|string|unique:users,cKode',
+        $roles = Role::all();
+        $userRoles = $user->roles->pluck('id')->toArray();
+        return view('users.edit', compact('user', 'roles', 'userRoles'));
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $request->validate([
             'cName' => 'required|string|max:255',
+            'username' => ['required', 'string', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:6|confirmed',
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:roles,id',
         ]);
 
-        $user = User::create($validated);
-        return response()->json($user, 201);
-    }
+        $userData = $request->only('cName', 'username');
+        if ($request->filled('password')) {
+            $userData['password'] = $request->password;
+        }
 
+        $user->update($userData);
 
-    public function assignRoles(Request $request, User $user)
-    {
-        $validated = $request->validate([
-            'role_ids' => 'required|array',
-            'role_ids.*' => 'exists:roles,id',
-        ]);
+        $user->roles()->sync($request->input('roles', []));
 
-        $user->roles()->sync($validated['role_ids']);
-
-        return response()->json([
-            'message' => "Roles for user '{$user->cName}' have been updated.",
-            'user' => $user->load('roles')
-        ]);
+        return redirect()->route('users.index')->with('success', 'User berhasil diperbarui.');
     }
 }

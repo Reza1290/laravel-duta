@@ -1,8 +1,8 @@
 <?php
 
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\UserPermissionController;
+use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\UserPermissionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 

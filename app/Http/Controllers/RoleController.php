@@ -2,39 +2,85 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
-class RoleController extends Controller
+class RoleController extends PermissionedController
 {
+    protected string $resourceName = 'master';
+
     public function index()
     {
-        return Role::with('permissions.menu')->get();
+        $roles = Role::withCount('permissions')->latest()->paginate(10);
+        return view('roles.index', compact('roles'));
+    }
+
+
+    public function create()
+    {
+        $permissions = Permission::with('menu')->get()->groupBy('menu.cName');
+        return view('roles.create', compact('permissions'));
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'cKode' => 'required|string|unique:roles,cKode',
+        $request->validate([
+            'cKode' => 'required|string|max:255|unique:roles,cKode',
             'cName' => 'required|string|max:255',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
         ]);
 
-        $role = Role::create($validated);
-        return response()->json($role, 201);
+        $role = Role::create($request->only('cKode', 'cName'));
+
+        if ($request->has('permissions')) {
+            $role->permissions()->sync($request->permissions);
+        }
+
+        return redirect()->route('roles.index')
+            ->with('success', 'Role berhasil dibuat.');
     }
 
-    public function assignPermissions(Request $request, Role $role)
+
+    public function edit(Role $role)
     {
-        $validated = $request->validate([
-            'permission_ids' => 'required|array',
-            'permission_ids.*' => 'exists:permissions,id', 
+        $permissions = Permission::with('menu')->get()->groupBy('menu.cName');
+
+        $rolePermissions = $role->permissions->pluck('id')->toArray();
+
+        return view('roles.edit', compact('role', 'permissions', 'rolePermissions'));
+    }
+
+
+    public function update(Request $request, Role $role)
+    {
+        $request->validate([
+            'cKode' => ['required', 'string', 'max:255', Rule::unique('roles')->ignore($role->id)],
+            'cName' => 'required|string|max:255',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
         ]);
 
-        $role->permissions()->sync($validated['permission_ids']);
+        $role->update($request->only('cKode', 'cName'));
 
-        return response()->json([
-            'message' => "Permissions for role '{$role->cName}' have been updated.",
-            'role' => $role->load('permissions.menu') 
-        ]);
+        $role->permissions()->sync($request->input('permissions', []));
+
+        return redirect()->route('roles.index')
+            ->with('success', 'Role berhasil diperbarui.');
+    }
+
+
+    public function destroy(Role $role)
+    {
+        if ($role->users()->count() > 0) {
+            return back()->with('error', 'Role tidak bisa dihapus karena masih digunakan oleh user.');
+        }
+
+        $role->delete();
+
+        return redirect()->route('roles.index')
+            ->with('success', 'Role berhasil dihapus.');
     }
 }
